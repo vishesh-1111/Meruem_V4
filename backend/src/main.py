@@ -1,15 +1,20 @@
-import os
 from contextlib import asynccontextmanager
 
 from beanie import init_beanie
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
 from fastapi import Response
 from .database import  db
 from .user.schema import User
+from .workspace.schema import Workspace
+from .connections.schema import Connection
+from .chats.schema import Chat
 from .auth.api import router as auth_router
-load_dotenv()
+from .workspace.api import router as workspace_router
+from .connections.api import router as connections_router
+from .chats.api import router as chats_router
+
+
 
 
 @asynccontextmanager
@@ -18,6 +23,9 @@ async def lifespan(app: FastAPI):
         database=db,
         document_models=[
             User,
+            Workspace,
+            Connection,
+            Chat
         ],
     )
     yield
@@ -43,4 +51,7 @@ app.add_middleware(
 
 
 app.include_router(auth_router,tags=["auth"])
+app.include_router(workspace_router,tags=["workspace"])
+app.include_router(connections_router,tags=["connections"])
+app.include_router(chats_router,tags=["chats"])
 

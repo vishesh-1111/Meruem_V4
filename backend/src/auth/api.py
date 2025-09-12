@@ -4,11 +4,11 @@ from pydantic import BaseModel
 import os
 import urllib.parse
 import httpx
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta,timezone
 import jwt
 from beanie import PydanticObjectId
 from ..user.schema import User, UserCreate
-
+from config import get_settings
 router = APIRouter(prefix="/auth")
 
 
@@ -24,8 +24,8 @@ async def get_google_oauth_url():
     """
     try:
         # Get environment variables
-        client_id = os.getenv("GOOGLE_OAUTH_CLIENT_ID")
-        redirect_uri = os.getenv("GOOGLE_OAUTH_REDIRECT_URI")
+        client_id = get_settings().GOOGLE_OAUTH_CLIENT_ID
+        redirect_uri = get_settings().GOOGLE_OAUTH_REDIRECT_URI
         
         # Validate required environment variables
         if not client_id:
@@ -80,9 +80,9 @@ async def google_oauth_callback(request: GoogleCallbackRequest):
     """
     try:
         # Get environment variables
-        client_id = os.getenv("GOOGLE_OAUTH_CLIENT_ID")
-        client_secret = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET")
-        redirect_uri = os.getenv("GOOGLE_OAUTH_REDIRECT_URI")
+        client_id = get_settings().GOOGLE_OAUTH_CLIENT_ID
+        client_secret = get_settings().GOOGLE_OAUTH_CLIENT_SECRET
+        redirect_uri = get_settings().GOOGLE_OAUTH_REDIRECT_URI
         
         if not all([client_id, client_secret, redirect_uri]):
             raise HTTPException(
@@ -103,6 +103,7 @@ async def google_oauth_callback(request: GoogleCallbackRequest):
         async with httpx.AsyncClient() as client:
             # Get access token
             token_response = await client.post(token_url, data=token_data)
+            print("token_response",token_response)
             
             if token_response.status_code != 200:
                 raise HTTPException(
@@ -138,6 +139,8 @@ async def google_oauth_callback(request: GoogleCallbackRequest):
             family_name = profile_data.get("family_name", "")
             email = profile_data.get("email", "")
             picture = profile_data.get("picture", "")
+
+            print("profile_data",profile_data)
             
             if not given_name or not family_name or not email:
                 raise HTTPException(
@@ -147,6 +150,8 @@ async def google_oauth_callback(request: GoogleCallbackRequest):
             
             # Check if user already exists by email
             existing_user = await User.find_one(User.email == email)
+
+            print('existing_user',existing_user)
             
             if existing_user:
                 user = existing_user
@@ -170,7 +175,8 @@ async def google_oauth_callback(request: GoogleCallbackRequest):
                 await user.insert()
             
             # Generate JWT token with 2-hour expiration
-            jwt_secret = os.getenv("JWT_SECRET")
+            jwt_secret =get_settings().JWT_SECRET
+            print("JWT_SECRET",jwt_secret)
             if not jwt_secret:
                 raise HTTPException(
                     status_code=500,
@@ -178,7 +184,10 @@ async def google_oauth_callback(request: GoogleCallbackRequest):
                 )
             
             # Calculate expiry time (2 hours from now)
-            expiry_time = datetime.utcnow() + timedelta(hours=2)
+            # expiry_time = datetime.datetime.utcnow()  + timedelta(hours=2)
+            expiry_time = datetime.now(timezone.utc)   + timedelta(hours=2)
+
+            print("expiry_time",expiry_time)
             
             # Token payload with specified fields
             token_payload = {
@@ -219,6 +228,7 @@ async def google_oauth_callback(request: GoogleCallbackRequest):
                 }
             }
             response = JSONResponse(content=response_content)
+            print(response)
             # response = RedirectResponse(url="http://localhost:3000", status_code=302)
             response.set_cookie(
                 key="meruem_access_token",
