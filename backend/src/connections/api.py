@@ -7,7 +7,7 @@ from pymongo.errors import DuplicateKeyError
 from urllib.parse import urlparse
 from .handlers.mysql import parse_mysql_connection_string,get_mysql_schema
 from src.user.schema import User
-from src.auth.current_user import current_active_user
+from ..auth.services import current_active_user
 from src.workspace.schema import Workspace
 from .schema import (
     Connection, 

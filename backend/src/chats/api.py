@@ -1,34 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
 from typing import List
-from datetime import datetime
 from beanie import PydanticObjectId
 from pymongo.errors import DuplicateKeyError
 
 from src.user.schema import User
-from src.auth.current_user import current_active_user
+from ..auth.services import current_active_user
 from src.workspace.schema import Workspace
+from src.workspace.services import get_user_role_in_workspace, UserRole
 from src.connections.schema import Connection
 from .schema import Chat
+from .models import CreateChatRequest, ChatResponse
 from fastapi import Response
-
-
-# Request models
-class CreateChatRequest(BaseModel):
-    name: str
-
-
-# Response models
-class ChatResponse(BaseModel):
-    id: str
-    name: str
-    created_by: str
-    created_at: datetime
-    workspace_id: str
-    connection_id: str
-    
-    class Config:
-        from_attributes = True
 
 
 router = APIRouter(prefix="/chats", tags=["chats"])
@@ -51,23 +33,8 @@ async def create_chat(
     The current user is automatically set as the creator.
     """
     try:
-        # Validate workspace exists and user has access
-        workspace = await Workspace.get(PydanticObjectId(workspace_id))
-        if not workspace:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Workspace not found"
-            )
-        
-        # Check if user has access to this workspace
-        user_has_access = any(
-            str(member.user_id.ref.id) == str(current_user.id) for member in workspace.members
-        )
-        if not user_has_access:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You don't have access to this workspace"
-            )
+        # Check if user has access to this workspace using service function
+        user_role = await get_user_role_in_workspace(workspace_id, str(current_user.id))
         
         # Validate connection exists and belongs to the workspace
         connection = await Connection.get(PydanticObjectId(connection_id))
@@ -88,7 +55,7 @@ async def create_chat(
         chat = Chat(
             name=chat_data.name,
             created_by=current_user.id,
-            workspace_id=workspace.id,
+            workspace_id=PydanticObjectId(workspace_id),
             connection_id=connection.id
         )
         
@@ -134,23 +101,8 @@ async def get_workspace_chats(
     - **workspace_id**: ID of the workspace to get chats from
     """
     try:
-        # Validate workspace exists and user has access
-        workspace = await Workspace.get(PydanticObjectId(workspace_id))
-        if not workspace:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Workspace not found"
-            )
-        
-        # Check if user has access to this workspace
-        user_has_access = any(
-            str(member.user_id.ref.id) == str(current_user.id) for member in workspace.members
-        )
-        if not user_has_access:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You don't have access to this workspace"
-            )
+        # Check if user has access to this workspace using service function
+        user_role = await get_user_role_in_workspace(workspace_id, str(current_user.id))
         
         # Get all chats in the workspace, sorted by creation date (newest first)
         chats = await Chat.find(
@@ -203,23 +155,9 @@ async def get_connection_chats(
                 detail="Connection not found"
             )
         
-        # Get the workspace to check user access
-        workspace = await Workspace.get(connection.workspaceId.ref.id)
-        if not workspace:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Workspace not found"
-            )
-        
-        # Check if user has access to this workspace
-        user_has_access = any(
-            str(member.user_id.ref.id) == str(current_user.id) for member in workspace.members
-        )
-        if not user_has_access:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You don't have access to this connection"
-            )
+        # Check if user has access to the workspace that owns this connection
+        workspace_id = str(connection.workspaceId.ref.id)
+        user_role = await get_user_role_in_workspace(workspace_id, str(current_user.id))
         
         # Get all chats for the connection, sorted by creation date (newest first)
         chats = await Chat.find(
@@ -271,23 +209,9 @@ async def get_chat(
                 detail="Chat not found"
             )
         
-        # Get the workspace to check user access
-        workspace = await Workspace.get(chat.workspace_id.ref.id)
-        if not workspace:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Workspace not found"
-            )
-        
-        # Check if user has access to this workspace
-        user_has_access = any(
-            str(member.user_id.ref.id) == str(current_user.id) for member in workspace.members
-        )
-        if not user_has_access:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You don't have access to this chat"
-            )
+        # Check if user has access to the workspace that owns this chat
+        workspace_id = str(chat.workspace_id.ref.id)
+        user_role = await get_user_role_in_workspace(workspace_id, str(current_user.id))
         
         # Return chat
         return ChatResponse(
@@ -333,14 +257,6 @@ async def delete_chat(
                 detail="Chat not found"
             )
         
-        # Get the workspace to check admin permissions
-        workspace = await Workspace.get(chat.workspace_id.ref.id)
-        if not workspace:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Workspace not found"
-            )
-        
         # Check if user has permission to delete this chat
         can_delete = False
         
@@ -349,10 +265,14 @@ async def delete_chat(
             can_delete = True
         else:
             # Condition 2: User is admin of the workspace
-            for member in workspace.members:
-                if str(member.user_id.ref.id) == str(current_user.id) and member.is_admin:
+            try:
+                workspace_id = str(chat.workspace_id.ref.id)
+                user_role = await get_user_role_in_workspace(workspace_id, str(current_user.id))
+                if user_role == UserRole.ADMIN:
                     can_delete = True
-                    break
+            except HTTPException:
+                # User doesn't have access to workspace
+                pass
         
         if not can_delete:
             raise HTTPException(

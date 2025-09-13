@@ -1,63 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field, validator
-from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, status, Request
+from typing import Optional
 from datetime import datetime
 from beanie import PydanticObjectId
 from pymongo.errors import DuplicateKeyError
 
 from src.user.schema import User
-from src.auth.current_user import current_active_user
+from src.user.services import check_user_exists
+from ..auth.services import get_current_user, current_active_user
 from .schema import Workspace, WorkspaceMember
-
-
-# Request models
-class CreateWorkspaceRequest(BaseModel):
-    name: str = Field(
-        ..., 
-        min_length=2, 
-        max_length=100,
-        description="Workspace name must be between 2 and 100 characters"
-    )
-    
-    @validator('name')
-    def validate_name(cls, v):
-        if v is None:
-            raise ValueError('Workspace name is required')
-        
-        # Strip whitespace
-        v = v.strip()
-        
-        if not v:
-            raise ValueError('Workspace name cannot be empty or contain only whitespace')
-        
-        # Additional validation for special characters if needed
-        if len(v) < 2:
-            raise ValueError('Workspace name must be at least 2 characters long')
-        
-        if len(v) > 100:
-            raise ValueError('Workspace name cannot exceed 100 characters')
-        
-        return v
-
-
-class AddMemberRequest(BaseModel):
-    email: str
-
-
-class UpdateWorkspaceRequest(BaseModel):
-    name: str
-
-
-# Response models
-class WorkspaceResponse(BaseModel):
-    id: str
-    name: str
-    members: List[WorkspaceMember]
-    created_at: datetime
-    created_by: str
-    
-    class Config:
-        from_attributes = True
+from .models import CreateWorkspaceRequest, AddMemberRequest, UpdateWorkspaceRequest, WorkspaceResponse
+from .services import get_user_role_in_workspace, check_user_already_member, UserRole
 
 
 router = APIRouter(prefix="/workspace", tags=["workspace"])
@@ -66,10 +18,10 @@ router = APIRouter(prefix="/workspace", tags=["workspace"])
 @router.post("/create", response_model=WorkspaceResponse, status_code=status.HTTP_201_CREATED)
 async def create_workspace(
     workspace_data: CreateWorkspaceRequest,
-    current_user: User = Depends(current_active_user)
+    request: Request
 ):
     
-    print(current_user)
+    current_user_id = get_current_user(request)
     """
     Create a new workspace.
     
@@ -78,73 +30,20 @@ async def create_workspace(
     The current user is automatically added as an admin member and set as the creator.
     """
     try:
-        # Validate workspace data is present
-        if workspace_data is None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Workspace data is required"
-            )
-        
-        # Validate name is present and not empty
-        if not hasattr(workspace_data, 'name'):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Workspace name is required"
-            )
-        
-        if not workspace_data.name:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Workspace name cannot be empty"
-            )
-        
-        # Validate name format and length
         workspace_name = workspace_data.name.strip()
-        if not workspace_name:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Workspace name cannot be empty or contain only whitespace"
-            )
         
-        if len(workspace_name) < 2:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Workspace name must be at least 2 characters long"
-            )
-        
-        if len(workspace_name) > 100:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Workspace name cannot exceed 100 characters"
-            )
-        
-        # Validate current user
-        if current_user is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Authentication required"
-            )
-        
-        if not current_user.id:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid user: User ID is missing"
-            )
-        
-        # Add current user as admin
-        print(current_user.id)
         current_user_member = WorkspaceMember(
-            user_id=current_user.id,
+            user_id=PydanticObjectId(current_user_id),
             is_admin=True
         )
         
         # Create workspace
 
-        print(workspace_name,current_user_member,current_user.id)
+        print(workspace_name,current_user_member,current_user_id)
         workspace = Workspace(
             name=workspace_name,
             members=[current_user_member],
-            created_by=current_user.id,
+            created_by=PydanticObjectId(current_user_id),
             created_at=datetime.now()
         )
         
@@ -200,49 +99,35 @@ async def add_member_to_workspace(
     Only admin members can add new members. New members are added as non-admin by default.
     """
     try:
-        # Convert workspace_id to ObjectId
-        workspace_object_id = PydanticObjectId(workspace_id)
+        # Check if current user is an admin in this workspace
+        current_user_role = await get_user_role_in_workspace(workspace_id, str(current_user.id))
         
-        # Get the workspace and check if current user is a member
-        workspace = await Workspace.find_one(
-            Workspace.id == workspace_object_id,
-            Workspace.members.user_id.id == current_user.id
-        )
-        
-        if not workspace:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Workspace not found or you are not a member of this workspace"
-            )
-        
-        # Check if current user is an admin
-        current_user_member = None
-        for member in workspace.members:
-            if member.user_id.ref.id == current_user.id:
-                current_user_member = member
-                break
-        
-        if not current_user_member or not current_user_member.is_admin:
+        if current_user_role != UserRole.ADMIN:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Only workspace admins can add members"
             )
         
-        # Find user by email
-        user_to_add = await User.find_one(User.email == member_data.email)
-        if not user_to_add:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User with email '{member_data.email}' not found"
-            )
+        # Check if user to add exists and is registered
+        user_to_add = await check_user_exists(member_data.email)
         
         # Check if user is already a member
-        for member in workspace.members:
-            if member.user_id.ref.id == user_to_add.id:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"User '{member_data.email}' is already a member of this workspace"
-                )
+        is_already_member = await check_user_already_member(workspace_id, str(user_to_add.id))
+        if is_already_member:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"User '{member_data.email}' is already a member of this workspace"
+            )
+        
+        # Get the workspace to add the member
+        workspace_object_id = PydanticObjectId(workspace_id)
+        workspace = await Workspace.find_one(Workspace.id == workspace_object_id)
+        
+        if not workspace:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Workspace not found"
+            )
         
         # Add user as non-admin member
         new_member = WorkspaceMember(
@@ -263,11 +148,9 @@ async def add_member_to_workspace(
             created_by=str(workspace.created_by.ref.id)
         )
         
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid workspace ID format: {str(e)}"
-        )
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -290,32 +173,23 @@ async def update_workspace(
     Only admin members can update the workspace name.
     """
     try:
-        # Convert workspace_id to ObjectId
-        workspace_object_id = PydanticObjectId(workspace_id)
+        # Check if current user is an admin in this workspace
+        current_user_role = await get_user_role_in_workspace(workspace_id, str(current_user.id))
         
-        # Get the workspace and check if current user is a member
-        workspace = await Workspace.find_one(
-            Workspace.id == workspace_object_id,
-            Workspace.members.user_id.id == current_user.id
-        )
+        if current_user_role != UserRole.ADMIN:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only workspace admins can update the workspace"
+            )
+        
+        # Get the workspace to update
+        workspace_object_id = PydanticObjectId(workspace_id)
+        workspace = await Workspace.find_one(Workspace.id == workspace_object_id)
         
         if not workspace:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Workspace not found or you are not a member of this workspace"
-            )
-        
-        # Check if current user is an admin
-        current_user_member = None
-        for member in workspace.members:
-            if member.user_id.ref.id == current_user.id:
-                current_user_member = member
-                break
-        
-        if not current_user_member or not current_user_member.is_admin:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Only workspace admins can update the workspace"
+                detail="Workspace not found"
             )
         
         # Update the workspace name
@@ -338,11 +212,9 @@ async def update_workspace(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"You already have a workspace named '{workspace_data.name}'. Please choose a different name."
         )
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid workspace ID format: {str(e)}"
-        )
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -363,32 +235,23 @@ async def delete_workspace(
     Only admin members can delete the workspace.
     """
     try:
-        # Convert workspace_id to ObjectId
-        workspace_object_id = PydanticObjectId(workspace_id)
+        # Check if current user is an admin in this workspace
+        current_user_role = await get_user_role_in_workspace(workspace_id, str(current_user.id))
         
-        # Get the workspace and check if current user is a member
-        workspace = await Workspace.find_one(
-            Workspace.id == workspace_object_id,
-            Workspace.members.user_id.id == current_user.id
-        )
+        if current_user_role != UserRole.ADMIN:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only workspace admins can delete the workspace"
+            )
+        
+        # Get the workspace to delete
+        workspace_object_id = PydanticObjectId(workspace_id)
+        workspace = await Workspace.find_one(Workspace.id == workspace_object_id)
         
         if not workspace:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Workspace not found or you are not a member of this workspace"
-            )
-        
-        # Check if current user is an admin
-        current_user_member = None
-        for member in workspace.members:
-            if member.user_id.ref.id == current_user.id:
-                current_user_member = member
-                break
-        
-        if not current_user_member or not current_user_member.is_admin:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Only workspace admins can delete the workspace"
+                detail="Workspace not found"
             )
         
         # Delete the workspace
@@ -397,11 +260,9 @@ async def delete_workspace(
         # Return 204 No Content status (successful deletion)
         return
         
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid workspace ID format: {str(e)}"
-        )
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

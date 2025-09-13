@@ -2,13 +2,12 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse, RedirectResponse
 from pydantic import BaseModel
 import os
-import urllib.parse
 import httpx
-from datetime import datetime, timedelta,timezone
-import jwt
 from beanie import PydanticObjectId
 from ..user.schema import User, UserCreate
 from config import get_settings
+from .config import get_google_oauth_config
+from .services import create_jwt_token, fetch_google_user_profile, exchange_code_for_token, generate_google_oauth_url, get_access_token_from_code
 router = APIRouter(prefix="/auth")
 
 
@@ -23,47 +22,9 @@ async def get_google_oauth_url():
     Returns the OAuth URL that users should be redirected to for authentication.
     """
     try:
-        # Get environment variables
-        client_id = get_settings().GOOGLE_OAUTH_CLIENT_ID
-        redirect_uri = get_settings().GOOGLE_OAUTH_REDIRECT_URI
-        
-        # Validate required environment variables
-        if not client_id:
-            raise HTTPException(
-                status_code=500,
-                detail="Google OAuth client ID not configured"
-            )
-        
-        if not redirect_uri:
-            raise HTTPException(
-                status_code=500,
-                detail="Google OAuth redirect URI not configured"
-            )
-        
-        # Build OAuth URL
-        base_url = "https://accounts.google.com/o/oauth2/v2/auth"
-        params = {
-            "client_id": client_id,
-            "redirect_uri": redirect_uri,
-            "response_type": "code",
-            "access_type": "online",
-            "prompt": "consent",
-            "scope": "openid email profile"
-        }
-        
-        try:
-            oauth_url = f"{base_url}?{urllib.parse.urlencode(params)}"
-        except Exception as e:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Failed to generate OAuth URL: {str(e)}"
-            )
-        
+        oauth_url = generate_google_oauth_url()
         return JSONResponse(content={"url": oauth_url})
         
-    except HTTPException:
-        # Re-raise HTTP exceptions
-        raise
     except Exception as e:
         # Handle any other unexpected errors
         raise HTTPException(
@@ -79,166 +40,83 @@ async def google_oauth_callback(request: GoogleCallbackRequest):
     Exchange code for access token and create/get user.
     """
     try:
-        # Get environment variables
-        client_id = get_settings().GOOGLE_OAUTH_CLIENT_ID
-        client_secret = get_settings().GOOGLE_OAUTH_CLIENT_SECRET
-        redirect_uri = get_settings().GOOGLE_OAUTH_REDIRECT_URI
+        # Get access token from authorization code using service
+        access_token = await get_access_token_from_code(request.code)
         
-        if not all([client_id, client_secret, redirect_uri]):
-            raise HTTPException(
-                status_code=500, 
-                detail="Missing Google OAuth configuration"
+        # Get user profile from Google using service
+        profile_data = await fetch_google_user_profile(access_token)
+        
+        # Extract user information
+        given_name = profile_data["given_name"]
+        family_name = profile_data["family_name"]
+        email = profile_data["email"]
+        picture = profile_data["picture"]
+        
+        # Check if user already exists by email
+        existing_user = await User.find_one(User.email == email)
+
+        print('existing_user',existing_user)
+        
+        if existing_user:
+            user = existing_user
+        else:
+            # Create new user
+            user_data = UserCreate(
+                first_name=given_name,
+                last_name=family_name,
+                email=email,
+                profile_url=picture if picture else None
             )
+            
+            # Save user to database
+            user = User(
+                first_name=user_data.first_name,
+                last_name=user_data.last_name,
+                email=user_data.email,
+                profile_url=user_data.profile_url
+            )
+            
+            await user.insert()
         
-        # Exchange authorization code for access token
-        token_url = "https://oauth2.googleapis.com/token"
-        token_data = {
-            "code": request.code,
-            "client_id": client_id,
-            "client_secret": client_secret,
-            "redirect_uri": redirect_uri,
-            "grant_type": "authorization_code",
+        # Generate JWT token with 2-hour expiration using service
+        token_payload = {
+            "user_id": str(user.id),
+            "user_email": user.email
         }
         
-        async with httpx.AsyncClient() as client:
-            # Get access token
-            token_response = await client.post(token_url, data=token_data)
-            print("token_response",token_response)
-            
-            if token_response.status_code != 200:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Failed to exchange code for token: {token_response.text}"
-                )
-            
-            token_info = token_response.json()
-            access_token = token_info.get("access_token")
-            
-            if not access_token:
-                raise HTTPException(
-                    status_code=400,
-                    detail="No access token received from Google"
-                )
-            
-            # Get user profile from Google
-            profile_url = "https://www.googleapis.com/oauth2/v2/userinfo"
-            headers = {"Authorization": f"Bearer {access_token}"}
-            
-            profile_response = await client.get(profile_url, headers=headers)
-            
-            if profile_response.status_code != 200:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Failed to get user profile: {profile_response.text}"
-                )
-            
-            profile_data = profile_response.json()
-            
-            # Extract user information
-            given_name = profile_data.get("given_name", "")
-            family_name = profile_data.get("family_name", "")
-            email = profile_data.get("email", "")
-            picture = profile_data.get("picture", "")
-
-            print("profile_data",profile_data)
-            
-            if not given_name or not family_name or not email:
-                raise HTTPException(
-                    status_code=400,
-                    detail="Missing required user information from Google profile"
-                )
-            
-            # Check if user already exists by email
-            existing_user = await User.find_one(User.email == email)
-
-            print('existing_user',existing_user)
-            
-            if existing_user:
-                user = existing_user
-            else:
-                # Create new user
-                user_data = UserCreate(
-                    first_name=given_name,
-                    last_name=family_name,
-                    email=email,
-                    profile_url=picture if picture else None
-                )
-                
-                # Save user to database
-                user = User(
-                    first_name=user_data.first_name,
-                    last_name=user_data.last_name,
-                    email=user_data.email,
-                    profile_url=user_data.profile_url
-                )
-                
-                await user.insert()
-            
-            # Generate JWT token with 2-hour expiration
-            jwt_secret =get_settings().JWT_SECRET
-            print("JWT_SECRET",jwt_secret)
-            if not jwt_secret:
-                raise HTTPException(
-                    status_code=500,
-                    detail="JWT secret not configured"
-                )
-            
-            # Calculate expiry time (2 hours from now)
-            # expiry_time = datetime.datetime.utcnow()  + timedelta(hours=2)
-            expiry_time = datetime.now(timezone.utc)   + timedelta(hours=2)
-
-            print("expiry_time",expiry_time)
-            
-            # Token payload with specified fields
-            token_payload = {
-                "user_id": str(user.id),
-                "user_email": user.email,
-                "exp": int(expiry_time.timestamp())  # iat as expiry time as requested
+        # Generate JWT token using service function
+        meruem_access_token = create_jwt_token(token_payload, lifespan=2)
+        
+        # Create response with cookie
+        response_content = {
+            "message": "User authenticated successfully",
+            "meruem_access_token": meruem_access_token,
+            "token_expires_in": 7200,  # 2 hours in seconds
+            "user": {
+                "id": str(user.id),
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "email": user.email,
+                "profile_url": user.profile_url
+            },
+            "google_profile": {
+                "email": email,
+                "given_name": given_name,
+                "family_name": family_name
             }
-            
-            # Generate JWT token
-            try:
-                meruem_access_token = jwt.encode(
-                    token_payload, 
-                    jwt_secret, 
-                    algorithm="HS256"
-                )
-            except Exception as e:
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"Failed to generate access token: {str(e)}"
-                )
-            
-            # Create response with cookie
-            response_content = {
-                "message": "User authenticated successfully",
-                "meruem_access_token": meruem_access_token,
-                "token_expires_in": 7200,  # 2 hours in seconds
-                "user": {
-                    "id": str(user.id),
-                    "first_name": user.first_name,
-                    "last_name": user.last_name,
-                    "email": user.email,
-                    "profile_url": user.profile_url
-                },
-                "google_profile": {
-                    "email": email,
-                    "given_name": given_name,
-                    "family_name": family_name
-                }
-            }
-            response = JSONResponse(content=response_content)
-            print(response)
-            # response = RedirectResponse(url="http://localhost:3000", status_code=302)
-            response.set_cookie(
-                key="meruem_access_token",
-                value=meruem_access_token,
-                max_age=7200,  # 2 hours
-                httponly=False,
-                secure=True,  # True in production with HTTPS
-                samesite="none"
-            )
-            return response
+        }
+        response = JSONResponse(content=response_content)
+        print(response)
+        # response = RedirectResponse(url="http://localhost:3000", status_code=302)
+        response.set_cookie(
+            key="meruem_access_token",
+            value=meruem_access_token,
+            max_age=7200,  # 2 hours
+            httponly=False,
+            secure=True,  # True in production with HTTPS
+            samesite="none"
+        )
+        return response
             
     except HTTPException:
         # Re-raise HTTP exceptions
@@ -251,21 +129,17 @@ async def google_oauth_callback(request: GoogleCallbackRequest):
         )
 
 
-@router.post("/logout")
+@router.get("/logout")
 async def logout():
     """
     Handle user logout by redirecting to localhost:3000.
     Since JWT tokens are stateless, token invalidation happens on the client side.
     """
     try:
-        # For JWT tokens, logout is typically handled on the client side
-        # by removing the token from storage (localStorage, cookies, etc.)
-        
-        # Redirect to localhost:3000 after logout
-        return RedirectResponse(
-            url="http://localhost:3000",
-            status_code=302
-        )
+     response = RedirectResponse(url="http://localhost:3000", status_code=302)
+     response.delete_cookie(key="meruem_access_token", domain="localhost", path="/")
+     return response
+
         
     except Exception as e:
         # Handle any unexpected errors
