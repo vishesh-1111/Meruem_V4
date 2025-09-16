@@ -28,23 +28,23 @@ import { useDataStream } from './data-stream-provider';
 const PurePreviewMessage = ({
   chatId,
   message,
-  vote,
+  // vote,
   isLoading,
   setMessages,
   regenerate,
-  isReadonly,
+  // isReadonly,
   requiresScrollPadding,
-  isArtifactVisible,
+  // isArtifactVisible,
 }: {
   chatId: string;
   message: ChatMessage;
-  vote: Vote | undefined;
+  // vote: Vote | undefined;
   isLoading: boolean;
   setMessages: UseChatHelpers<ChatMessage>['setMessages'];
   regenerate: UseChatHelpers<ChatMessage>['regenerate'];
-  isReadonly: boolean;
+  // isReadonly: boolean;
   requiresScrollPadding: boolean;
-  isArtifactVisible: boolean;
+  // isArtifactVisible: boolean;
 }) => {
   const [mode, setMode] = useState<'view' | 'edit'>('view');
 
@@ -167,110 +167,110 @@ const PurePreviewMessage = ({
               }
             }
 
-            if (type === 'tool-getWeather') {
-              const { toolCallId, state } = part;
+            // if (type === 'tool-getWeather') {
+            //   const { toolCallId, state } = part;
 
-              return (
-                <Tool key={toolCallId} defaultOpen={true}>
-                  <ToolHeader type="tool-getWeather" state={state} />
-                  <ToolContent>
-                    {state === 'input-available' && (
-                      <ToolInput input={part.input} />
-                    )}
-                    {state === 'output-available' && (
-                      <ToolOutput
-                        output={<Weather weatherAtLocation={part.output} />}
-                        errorText={undefined}
-                      />
-                    )}
-                  </ToolContent>
-                </Tool>
-              );
-            }
+            //   return (
+            //     <Tool key={toolCallId} defaultOpen={true}>
+            //       <ToolHeader type="tool-getWeather" state={state} />
+            //       <ToolContent>
+            //         {state === 'input-available' && (
+            //           <ToolInput input={part.input} />
+            //         )}
+            //         {state === 'output-available' && (
+            //           <ToolOutput
+            //             output={<Weather weatherAtLocation={part.output} />}
+            //             errorText={undefined}
+            //           />
+            //         )}
+            //       </ToolContent>
+            //     </Tool>
+            //   );
+            // }
 
-            if (type === 'tool-createDocument') {
-              const { toolCallId } = part;
+            // if (type === 'tool-createDocument') {
+            //   const { toolCallId } = part;
 
-              if (part.output && 'error' in part.output) {
-                return (
-                  <div
-                    key={toolCallId}
-                    className="p-4 text-red-500 bg-red-50 rounded-lg border border-red-200 dark:bg-red-950/50"
-                  >
-                    Error creating document: {String(part.output.error)}
-                  </div>
-                );
-              }
+            //   if (part.output && 'error' in part.output) {
+            //     return (
+            //       <div
+            //         key={toolCallId}
+            //         className="p-4 text-red-500 bg-red-50 rounded-lg border border-red-200 dark:bg-red-950/50"
+            //       >
+            //         Error creating document: {String(part.output.error)}
+            //       </div>
+            //     );
+            //   }
 
-              return (
-                <DocumentPreview
-                  key={toolCallId}
-                  isReadonly={isReadonly}
-                  result={part.output}
-                />
-              );
-            }
+            //   return (
+            //     <DocumentPreview
+            //       key={toolCallId}
+            //       isReadonly={isReadonly}
+            //       result={part.output}
+            //     />
+            //   );
+            // }
 
-            if (type === 'tool-updateDocument') {
-              const { toolCallId } = part;
+            // if (type === 'tool-updateDocument') {
+            //   const { toolCallId } = part;
 
-              if (part.output && 'error' in part.output) {
-                return (
-                  <div
-                    key={toolCallId}
-                    className="p-4 text-red-500 bg-red-50 rounded-lg border border-red-200 dark:bg-red-950/50"
-                  >
-                    Error updating document: {String(part.output.error)}
-                  </div>
-                );
-              }
+            //   if (part.output && 'error' in part.output) {
+            //     return (
+            //       <div
+            //         key={toolCallId}
+            //         className="p-4 text-red-500 bg-red-50 rounded-lg border border-red-200 dark:bg-red-950/50"
+            //       >
+            //         Error updating document: {String(part.output.error)}
+            //       </div>
+            //     );
+            //   }
 
-              return (
-                <div key={toolCallId} className="relative">
-                  <DocumentPreview
-                    isReadonly={isReadonly}
-                    result={part.output}
-                    args={{ ...part.output, isUpdate: true }}
-                  />
-                </div>
-              );
-            }
+            //   return (
+            //     <div key={toolCallId} className="relative">
+            //       <DocumentPreview
+            //         isReadonly={isReadonly}
+            //         result={part.output}
+            //         args={{ ...part.output, isUpdate: true }}
+            //       />
+            //     </div>
+            //   );
+            // }
 
-            if (type === 'tool-requestSuggestions') {
-              const { toolCallId, state } = part;
+            // if (type === 'tool-requestSuggestions') {
+            //   const { toolCallId, state } = part;
 
-              return (
-                <Tool key={toolCallId} defaultOpen={true}>
-                  <ToolHeader type="tool-requestSuggestions" state={state} />
-                  <ToolContent>
-                    {state === 'input-available' && (
-                      <ToolInput input={part.input} />
-                    )}
-                    {state === 'output-available' && (
-                      <ToolOutput
-                        output={
-                          'error' in part.output ? (
-                            <div className="p-2 text-red-500 rounded border">
-                              Error: {String(part.output.error)}
-                            </div>
-                          ) : (
-                            <DocumentToolResult
-                              type="request-suggestions"
-                              result={part.output}
-                              isReadonly={isReadonly}
-                            />
-                          )
-                        }
-                        errorText={undefined}
-                      />
-                    )}
-                  </ToolContent>
-                </Tool>
-              );
-            }
+            //   return (
+            //     <Tool key={toolCallId} defaultOpen={true}>
+            //       <ToolHeader type="tool-requestSuggestions" state={state} />
+            //       <ToolContent>
+            //         {state === 'input-available' && (
+            //           <ToolInput input={part.input} />
+            //         )}
+            //         {state === 'output-available' && (
+            //           <ToolOutput
+            //             output={
+            //               'error' in part.output ? (
+            //                 <div className="p-2 text-red-500 rounded border">
+            //                   Error: {String(part.output.error)}
+            //                 </div>
+            //               ) : (
+            //                 <DocumentToolResult
+            //                   type="request-suggestions"
+            //                   result={part.output}
+            //                   isReadonly={isReadonly}
+            //                 />
+            //               )
+            //             }
+            //             errorText={undefined}
+            //           />
+            //         )}
+            //       </ToolContent>
+            //     </Tool>
+            //   );
+            // }
           })}
 
-          {!isReadonly && (
+          {/* {!isReadonly && (
             <MessageActions
               key={`action-${message.id}`}
               chatId={chatId}
@@ -279,7 +279,7 @@ const PurePreviewMessage = ({
               isLoading={isLoading}
               setMode={setMode}
             />
-          )}
+          )} */}
         </div>
       </div>
     </motion.div>
@@ -294,7 +294,7 @@ export const PreviewMessage = memo(
     if (prevProps.requiresScrollPadding !== nextProps.requiresScrollPadding)
       return false;
     if (!equal(prevProps.message.parts, nextProps.message.parts)) return false;
-    if (!equal(prevProps.vote, nextProps.vote)) return false;
+    // if (!equal(prevProps.vote, nextProps.vote)) return false;
 
     return false;
   },

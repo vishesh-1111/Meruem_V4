@@ -244,7 +244,7 @@ function PureMultimodalInput({
         )}
       </AnimatePresence>
 
-      {messages.length === 0 &&
+      {/* {messages.length === 0 &&
         attachments.length === 0 &&
         uploadQueue.length === 0 && (
           <SuggestedActions
@@ -252,16 +252,16 @@ function PureMultimodalInput({
             chatId={chatId}
             selectedVisibilityType={selectedVisibilityType}
           />
-        )}
+        )} */}
 
-      <input
+      {/* <input
         type="file"
         className="fixed -top-4 -left-4 size-0.5 opacity-0 pointer-events-none"
         ref={fileInputRef}
         multiple
         onChange={handleFileChange}
         tabIndex={-1}
-      />
+      /> */}
 
       <PromptInput
         className="rounded-xl border shadow-sm transition-all duration-200 bg-background border-border focus-within:border-border hover:border-muted-foreground/50"
@@ -274,7 +274,7 @@ function PureMultimodalInput({
           }
         }}
       >
-        {(attachments.length > 0 || uploadQueue.length > 0) && (
+        {/* {(attachments.length > 0 || uploadQueue.length > 0) && (
           <div
             data-testid="attachments-preview"
             className="flex overflow-x-scroll flex-row gap-2 items-end px-3 py-2"
@@ -292,9 +292,9 @@ function PureMultimodalInput({
                   }
                 }}
               />
-            ))}
+            ))} */}
 
-            {uploadQueue.map((filename) => (
+            {/* {uploadQueue.map((filename) => (
               <PreviewAttachment
                 key={filename}
                 attachment={{
@@ -306,7 +306,7 @@ function PureMultimodalInput({
               />
             ))}
           </div>
-        )}
+        )} */}
 
         <PromptInputTextarea
           data-testid="multimodal-input"
@@ -348,9 +348,8 @@ export const MultimodalInput = memo(
   (prevProps, nextProps) => {
     if (prevProps.input !== nextProps.input) return false;
     if (prevProps.status !== nextProps.status) return false;
-    if (!equal(prevProps.attachments, nextProps.attachments)) return false;
-    if (prevProps.selectedVisibilityType !== nextProps.selectedVisibilityType)
-      return false;
+    // if (!equal(prevProps.attachments, nextProps.attachments)) return false;
+    // if (prevProps.selectedVisibilityType !== nextProps.selectedVisibilityType) return false
     if (prevProps.selectedModelId !== nextProps.selectedModelId) return false;
 
     return true;

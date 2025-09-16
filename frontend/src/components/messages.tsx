@@ -13,24 +13,24 @@ import { ArrowDownIcon } from 'lucide-react';
 interface MessagesProps {
   chatId: string;
   status: UseChatHelpers<ChatMessage>['status'];
-  votes: Array<Vote> | undefined;
+  // votes: Array<Vote> | undefined;
   messages: ChatMessage[];
   setMessages: UseChatHelpers<ChatMessage>['setMessages'];
   regenerate: UseChatHelpers<ChatMessage>['regenerate'];
-  isReadonly: boolean;
-  isArtifactVisible: boolean;
+  // isReadonly: boolean;
+  // isArtifactVisible: boolean;
   selectedModelId: string;
 }
 
 function PureMessages({
   chatId,
   status,
-  votes,
+  // votes,
   messages,
   setMessages,
   regenerate,
-  isReadonly,
-  isArtifactVisible,
+  // isReadonly,
+  // isArtifactVisible,
   selectedModelId,
 }: MessagesProps) {
   const {
@@ -78,18 +78,18 @@ function PureMessages({
               isLoading={
                 status === 'streaming' && messages.length - 1 === index
               }
-              vote={
-                votes
-                  ? votes.find((vote) => vote.messageId === message.id)
-                  : undefined
-              }
+              // vote={
+              //   votes
+              //     ? votes.find((vote) => vote.messageId === message.id)
+              //     : undefined
+              // }
               setMessages={setMessages}
               regenerate={regenerate}
-              isReadonly={isReadonly}
+              // isReadonly={isReadonly}
               requiresScrollPadding={
                 hasSentMessage && index === messages.length - 1
               }
-              isArtifactVisible={isArtifactVisible}
+              // isArtifactVisible={isArtifactVisible}
             />
           ))}
 
@@ -122,13 +122,13 @@ function PureMessages({
 }
 
 export const Messages = memo(PureMessages, (prevProps, nextProps) => {
-  if (prevProps.isArtifactVisible && nextProps.isArtifactVisible) return true;
+  // if (prevProps.isArtifactVisible && nextProps.isArtifactVisible) return true;
 
   if (prevProps.status !== nextProps.status) return false;
   if (prevProps.selectedModelId !== nextProps.selectedModelId) return false;
   if (prevProps.messages.length !== nextProps.messages.length) return false;
   if (!equal(prevProps.messages, nextProps.messages)) return false;
-  if (!equal(prevProps.votes, nextProps.votes)) return false;
+  // if (!equal(prevProps.votes, nextProps.votes)) return false;
 
   return false;
 });

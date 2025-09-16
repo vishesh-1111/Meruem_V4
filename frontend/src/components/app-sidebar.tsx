@@ -2,7 +2,7 @@
 
 import type { User } from 'next-auth';
 import { useRouter } from 'next/navigation';
-
+import { WorkspaceDrawer } from './workspace-drawer';
 import { PlusIcon } from '@/components/icons';
 import { SidebarHistory } from '@/components/sidebar-history';
 import { SidebarUserNav } from '@/components/sidebar-user-nav';
@@ -25,7 +25,10 @@ export function AppSidebar({ user }: { user: User | undefined }) {
   return (
     <Sidebar className="group-data-[side=left]:border-r-0">
       <SidebarHeader>
+       <WorkspaceDrawer />
+
         <SidebarMenu>
+          
           <div className="flex flex-row justify-between items-center">
             <Link
               href="/"
