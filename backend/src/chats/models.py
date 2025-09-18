@@ -12,7 +12,7 @@ class ChatResponse(BaseModel):
     id: str
     name: str
     created_by: str
-    created_at: datetime
+    createdAt: datetime
     workspace_id: str
     connection_id: str
     

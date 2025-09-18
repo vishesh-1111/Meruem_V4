@@ -6,7 +6,8 @@ import { WorkspaceContextProvider } from '@/components/provider/workspaceProvide
 // import { auth } from '../(auth)/auth';
 import Script from 'next/script';
 import { DataStreamProvider } from '@/components/data-stream-provider';
-
+import { cache } from 'react';
+import { getAlldata } from '@/lib/utils';
 // export const experimental_ppr = true;
 
 export default async function Layout({
@@ -26,20 +27,9 @@ const cookieStore = await cookies();
 
 const token = cookieStore.get('meruem_access_token')?.value;
 
-  const allData = await fetch(
-    'http://localhost:80/workspace/data',
+  const allData = await getAlldata(token as string);
 
-    {
-       credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-    }
-  )
-   .then((res) => res.json())
-
-  console.log(allData)
+  // console.log(allData)
 
   const isCollapsed = cookieStore.get('sidebar:state')?.value !== 'true';
 
@@ -52,7 +42,7 @@ const token = cookieStore.get('meruem_access_token')?.value;
     <WorkspaceContextProvider initialWorkspaces={allData.workspaces}>
       <DataStreamProvider>
         <SidebarProvider defaultOpen={!isCollapsed}>
-          <AppSidebar user={allData.user} />
+          <AppSidebar user={allData.user} currentWorkspace={allData.currentWorkspace} />
           <SidebarInset>{children}</SidebarInset>
         </SidebarProvider>
       </DataStreamProvider>

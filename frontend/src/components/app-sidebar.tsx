@@ -1,6 +1,6 @@
 'use client';
 
-import type { User } from 'next-auth';
+import type { User,Workspace } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { WorkspaceDrawer } from './workspace-drawer';
 import { PlusIcon } from '@/components/icons';
@@ -18,7 +18,13 @@ import {
 import Link from 'next/link';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
-export function AppSidebar({ user }: { user: User | undefined }) {
+export function AppSidebar({
+  user,
+  currentWorkspace,
+}: {
+  user: User | undefined;
+  currentWorkspace: Workspace | undefined;
+}) {
   const router = useRouter();
   const { setOpenMobile } = useSidebar();
 
@@ -62,7 +68,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarHistory user={user} />
+        <SidebarHistory currentWorkspace={currentWorkspace} />
       </SidebarContent>
       <SidebarFooter>{user && <SidebarUserNav user={user} />}</SidebarFooter>
     </Sidebar>

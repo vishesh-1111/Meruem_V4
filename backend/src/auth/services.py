@@ -14,6 +14,8 @@ SECRET_KEY = get_settings().JWT_SECRET
 ALGORITHM = "HS256"
 print("............................",SECRET_KEY)
 def get_current_user(request: Request):
+
+    print(request.cookies)
     """Extract user ID from JWT token in Authorization header (Bearer) or cookies."""
     # Check if JWT secret is configured
     if not SECRET_KEY:
@@ -30,8 +32,11 @@ def get_current_user(request: Request):
         token = authorization.split(" ")[1]
     
     # If no Bearer token, fall back to checking cookies
-    if not token:
-        token = request.cookies.get("meruem-access-token")
+    print('first',token)
+    if not token:                   
+        print("checking cookies for token...",request.cookies.get("meruem_access_token"))
+        token = request.cookies.get("meruem_access_token")
+    print('second',token)    
     
     # If still no token found, raise error
     if not token:

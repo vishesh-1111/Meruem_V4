@@ -39,6 +39,9 @@ origins = [
     "http://localhost:3000",  # Your frontend development server
     "http://127.0.0.1:3000",  # Alternative localhost
     "https://localhost:3000", # If you use HTTPS locally
+    "http://localhost:3001",  # Your frontend development server
+    "http://127.0.0.1:3001",  # Alternative localhost
+    "https://localhost:3001", # If you use HTTPS locally
 ]
 
 app.add_middleware(
@@ -55,3 +58,40 @@ app.include_router(workspace_router,tags=["workspace"])
 app.include_router(connections_router,tags=["connections"])
 app.include_router(chats_router,tags=["chats"])
 
+
+# from src.workspace.schema import Workspace
+    
+# async def F():
+#     x=await Workspace.find()
+#     print(x)
+
+
+# F()   
+
+
+# import asyncio
+# from src.workspace.schema import Workspace
+    
+# async def F():
+#     await init_beanie(
+#         database=db,
+#         document_models=[
+#             User,
+#             Workspace,
+#             Connection,
+#             Chat
+#         ],
+#     )
+
+#     workspaces_cursor = Workspace.find(
+#         Workspace.name == "My Workspace",
+#         fetch_links=True
+#     )
+#     x = []
+#     async for workspace in workspaces_cursor:
+#         x.append(workspace)
+
+#     print(x)
+
+# if __name__ == "__main__":
+#     asyncio.run(F())

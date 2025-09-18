@@ -53,3 +53,57 @@ class WorkspaceResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+
+class UserDataResponse(BaseModel):
+    first_name: str
+    last_name: str
+    profile_url: str = None
+    email :str
+    
+    class Config:
+        from_attributes = True
+
+
+class WorkspaceDataResponse(BaseModel):
+    id: str
+    name: str
+    
+    class Config:
+        from_attributes = True
+
+
+class ConnectionDataResponse(BaseModel):
+    connection_name: str
+    connection_driver: str
+    connection_id: str
+    
+    class Config:
+        from_attributes = True
+
+
+class ChatDataResponse(BaseModel):
+    chat_name: str
+    chat_id: str
+    
+    class Config:
+        from_attributes = True
+
+
+class WorkspaceDataFullResponse(BaseModel):
+    user: UserDataResponse
+    workspaces: List[WorkspaceDataResponse]
+    connections: List[ConnectionDataResponse]
+    chats: List[ChatDataResponse]
+    
+    class Config:
+        from_attributes = True
+
+
+class NewWorkspaceDataResponse(BaseModel):
+    currentWorkspace: WorkspaceDataResponse
+    user: UserDataResponse
+    workspaces: List[WorkspaceDataResponse]
+    
+    class Config:
+        from_attributes = True

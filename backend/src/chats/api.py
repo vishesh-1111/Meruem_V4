@@ -10,7 +10,7 @@ from src.workspace.services import get_user_role_in_workspace, UserRole
 from src.connections.schema import Connection
 from .schema import Chat
 from .models import CreateChatRequest, ChatResponse
-from fastapi import Response
+from fastapi import Response,Request
 
 
 router = APIRouter(prefix="/chats", tags=["chats"])
@@ -89,10 +89,11 @@ async def create_chat(
         )
 
 
-@router.get("/workspace/{workspace_id}", response_model=List[ChatResponse])
+@router.get("/workspace/{workspace_id}")
 async def get_workspace_chats(
     workspace_id: str,
     response: Response, 
+    request: Request,
     current_user: User = Depends(current_active_user)
 ):
     """
@@ -101,6 +102,8 @@ async def get_workspace_chats(
     - **workspace_id**: ID of the workspace to get chats from
     """
     try:
+
+        print(request.query_params)
         # Check if user has access to this workspace using service function
         user_role = await get_user_role_in_workspace(workspace_id, str(current_user.id))
         
@@ -116,13 +119,16 @@ async def get_workspace_chats(
                 id=str(chat.id),
                 name=chat.name,
                 created_by=str(chat.created_by.ref.id),
-                created_at=chat.created_at,
+                createdAt=chat.created_at,
                 workspace_id=str(chat.workspace_id.ref.id),
                 connection_id=str(chat.connection_id.ref.id)
             ))
         
         
-        return chat_responses
+        return {
+            "chats": chat_responses,
+            "hasMore": False
+        }
         
     except ValueError as e:
         raise HTTPException(

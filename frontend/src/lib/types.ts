@@ -67,6 +67,11 @@ export type User = {
 };
 
 
+export type Workspace = {
+  id: string; // "68c2b0e15b976448616305a0"
+  name: string; // "vishesh workspace"
+};
+
 
 export type Chat = {
   id: string; // "68c2b0e15b976448616305a0"

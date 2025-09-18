@@ -1,14 +1,16 @@
 // "use client";
-// import { cookies } from 'next/headers';
+import { cookies } from 'next/headers';
 // import { notFound, redirect } from 'next/navigation';
 // // import { auth } from '@/app/(auth)/auth';
-
+import { getAlldata } from '@/lib/utils';
 import { Chat } from '@/components/chat';
 // import { getChatById, getMessagesByChatId } from '@/lib/db/queries';
 // import { DataStreamHandler } from '@/components/data-stream-handler';
 import { DEFAULT_CHAT_MODEL } from '@/lib/ai/models';
 // import { convertToUIMessages } from '@/lib/utils';
 import { ChatHeader } from "@/components/chat-header";
+import { json } from 'zod';
+import { redirect } from 'next/navigation';
 // export default async function Page(props: { params: Promise<{ id: string }> }) {
 //   const params = await props.params;
 //   const { id } = params;
@@ -82,20 +84,12 @@ import { ChatHeader } from "@/components/chat-header";
 
 
 
-export default function Page() {  
+export default async function Page() {  
   console.log('rendering workspace chat ui')
-  return(       
-
-     <Chat
-        id={"132222222222222222222222222222223232"}
-        initialMessages={[]}
-        initialChatModel={DEFAULT_CHAT_MODEL}
-        // initialVisibilityType={chat.visibility}
-        // isReadonly={session?.user?.id !== chat.userId}
-        // session={session}
-        autoResume={true}
-        // initialLastContext={chat.lastContext ?? undefined}
-      />
+  const cookieStore = await cookies();
   
-  );
+  const token = cookieStore.get('meruem_access_token')?.value;
+  const data = await getAlldata(token as string)
+  
+  redirect(`/home/workspace/${data.currentWorkspace.id}`)
 }

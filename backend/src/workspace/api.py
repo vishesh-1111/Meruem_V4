@@ -1,14 +1,27 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request
-from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
+from typing import Optional, List
 from datetime import datetime
 from beanie import PydanticObjectId
 from pymongo.errors import DuplicateKeyError
 
 from src.user.schema import User
 from src.user.services import check_user_exists
+from src.connections.schema import Connection
+from src.chats.schema import Chat
 from ..auth.services import get_current_user, current_active_user
 from .schema import Workspace, WorkspaceMember
-from .models import CreateWorkspaceRequest, AddMemberRequest, UpdateWorkspaceRequest, WorkspaceResponse
+from .models import (
+    CreateWorkspaceRequest, 
+    AddMemberRequest, 
+    UpdateWorkspaceRequest, 
+    WorkspaceResponse,
+    WorkspaceDataFullResponse,
+    NewWorkspaceDataResponse,
+    UserDataResponse,
+    WorkspaceDataResponse,
+    ConnectionDataResponse,
+    ChatDataResponse
+)
 from .services import get_user_role_in_workspace, check_user_already_member, UserRole
 
 
@@ -267,4 +280,114 @@ async def delete_workspace(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete workspace: {str(e)}"
+        )
+
+
+@router.get("/data", response_model=NewWorkspaceDataResponse)
+async def get_workspace_data(
+    request: Request,
+    response: Response
+):
+    """
+    Get user data, workspaces, and current workspace information.
+    
+    The current workspace is determined by the 'last_workspace_used_id' cookie.
+    If not present, sets the cookie to the first workspace of the user and uses that as current workspace.
+    
+    Returns:
+    - currentWorkspace: Current active workspace (id, name)
+    - user: User information (first_name, last_name, profile_url, email)
+    - workspaces: Array of all workspaces the user belongs to
+    """
+    try:
+        # Get current user ID from request
+        current_user_id = get_current_user(request)
+        current_user_object_id = PydanticObjectId(current_user_id)
+        
+        # Fetch user information
+        user = await User.get(current_user_object_id)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        # Get all workspaces where the user is a member
+        curr_user = await current_active_user(request)
+        mongodb_query = {
+            "members.user_id.$id": curr_user.id
+        }
+        user_workspaces = await Workspace.find(mongodb_query).to_list()
+        
+        if not user_workspaces:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User is not a member of any workspace"
+            )
+        
+        # Get current workspace from cookie or set to first workspace
+        last_workspace_used_id = request.cookies.get("last_workspace_used_id")
+        current_workspace = None
+        
+        if last_workspace_used_id:
+            # Find the workspace in user's workspaces
+            for workspace in user_workspaces:
+                if str(workspace.id) == last_workspace_used_id:
+                    current_workspace = workspace
+                    break
+        
+        # If no valid workspace found in cookie, use the first workspace
+        if not current_workspace:
+            current_workspace = user_workspaces[0]
+            # Set the cookie for future requests
+            response.set_cookie(
+                key="last_workspace_used_id",
+                value=str(current_workspace.id),
+                httponly=True,
+                secure=True,
+                samesite="strict"
+            )
+        
+        # Prepare response data
+        user_data = UserDataResponse(
+            first_name=user.first_name,
+            last_name=user.last_name,
+            profile_url=user.profile_url,
+            email=user.email
+        )
+        
+        current_workspace_data = WorkspaceDataResponse(
+            id=str(current_workspace.id),
+            name=current_workspace.name
+        )
+        
+        workspaces_data = [
+            WorkspaceDataResponse(
+                id=str(workspace.id),
+                name=workspace.name
+            )
+            for workspace in user_workspaces
+        ]
+        
+        return NewWorkspaceDataResponse(
+            currentWorkspace=current_workspace_data,
+            user=user_data,
+            workspaces=workspaces_data
+        )
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid data format: {str(e)}"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get workspace data: {str(e)}"
         )    
+    
+
+

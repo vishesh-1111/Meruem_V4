@@ -10,13 +10,19 @@ import type { DBMessage, Document } from '@/lib/db/schema';
 import { ChatSDKError, type ErrorCode } from './errors';
 import type { ChatMessage, ChatTools, CustomUIDataTypes } from './types';
 import { formatISO } from 'date-fns';
-
+import { cache } from 'react';
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// Base URL for your backend - you can set this via environment variable
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+
 export const fetcher = async (url: string) => {
-  const response = await fetch(url);
+  // Prepend base URL if the URL is relative
+  const fullUrl = url.startsWith('/') ? `${BASE_URL}${url}` : url;
+  const response = await fetch(fullUrl,{credentials: 'include'});
+  console.log('Fetching from:', fullUrl)
 
   if (!response.ok) {
     const { code, cause } = await response.json();
@@ -114,3 +120,20 @@ export function getTextFromMessage(message: ChatMessage): string {
     .map((part) => part.text)
     .join('');
 }
+
+export const getAlldata = cache(async (token:string) => {
+  console.log("fetching cached data hit or miss")
+  // This function will only be executed once per render pass
+  const res = await fetch(
+    'http://localhost:80/workspace/data',
+
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    }
+  )
+   
+  return res.json();
+});
