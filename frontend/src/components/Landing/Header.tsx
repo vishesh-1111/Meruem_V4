@@ -46,7 +46,7 @@ const Header = () => {
             <li>
               <a href="#">Help</a>
             </li>
-            <Button text="Get for free" />
+            <Link href={"/auth"} prefetch={true}><Button text="Get for free"/></Link>
           </ul>
         </nav>
       </header>

@@ -13,14 +13,14 @@ import { Messages } from './messages';
 // import type { VisibilityType } from './visibility-selector';
 // import { useArtifactSelector } from '@/hooks/use-artifact';
 import { unstable_serialize } from 'swr/infinite';
-// import { getChatHistoryPaginationKey } from './sidebar-history';
+import { getChatHistoryPaginationKey } from './sidebar-history';
 import { toast } from './toast';
 // import type { Session } from 'next-auth';
 import { useSearchParams } from 'next/navigation';
 // import { useChatVisibility } from '@/hooks/use-chat-visibility';
 import { useAutoResume } from '@/hooks/use-auto-resume';
 import { ChatSDKError } from '@/lib/errors';
-import type { Attachment, ChatMessage } from '@/lib/types';
+import type { Attachment, ChatMessage,Connection } from '@/lib/types';
 import { useDataStream } from './data-stream-provider';
 import {
   AlertDialog,
@@ -37,20 +37,18 @@ export function Chat({
   id,
   initialMessages,
   initialChatModel,
-  initialVisibilityType,
-  isReadonly,
-  session,
+  connections,
   autoResume,
   initialLastContext,
+  workspaceId,
 }: {
   id: string;
   initialMessages: ChatMessage[];
   initialChatModel: string;
-  initialVisibilityType?: VisibilityType;
-  isReadonly?: boolean;
-  session?: Session;
+  connections:Connection[];
   autoResume: boolean;
   initialLastContext?: LanguageModelUsage;
+  workspaceId:string
 }) {
   // const { visibilityType } = useChatVisibility({
   //   chatId: id,
@@ -80,30 +78,39 @@ export function Chat({
     experimental_throttle: 100,
     generateId: generateUUID,
     transport: new DefaultChatTransport({
-      api: '/api/chat',
+      api: `${process.env.NEXT_PUBLIC_API_BASE_URL}/stream/`,
       fetch: fetchWithErrorHandlers,
       prepareSendMessagesRequest({ messages, id, body }) {
         return {
-          body: {
+          // body: {
+          //   id,
+          //   message: messages.at(-1),
+          //   selectedChatModel: initialChatModel,
+          //   ...body,
+          // },
+            body: {
             id,
-            message: messages.at(-1),
+            msg: messages.at(-1),
             selectedChatModel: initialChatModel,
-            selectedVisibilityType: visibilityType,
             ...body,
           },
         };
       },
     }),
+    
     onData: (dataPart) => {
+      console.log("receiving datas")
       setDataStream((ds) => (ds ? [...ds, dataPart] : []));
       if (dataPart.type === 'data-usage') {
         setUsage(dataPart.data);
       }
     },
     onFinish: () => {
+      console.log("finished")
       mutate(unstable_serialize(getChatHistoryPaginationKey));
     },
     onError: (error) => {
+      console.log("Error client stream",error)
       if (error instanceof ChatSDKError) {
         // Check if it's a credit card error
         if (
@@ -120,22 +127,24 @@ export function Chat({
     },
   });
 
+  console.log(messages)
+
   const searchParams = useSearchParams();
   const query = searchParams.get('query');
 
   const [hasAppendedQuery, setHasAppendedQuery] = useState(false);
 
-  useEffect(() => {
-    if (query && !hasAppendedQuery) {
-      sendMessage({
-        role: 'user' as const,
-        parts: [{ type: 'text', text: query }],
-      });
+  // useEffect(() => {
+  //   if (query && !hasAppendedQuery) {
+  //     sendMessage({
+  //       role: 'user' as const,
+  //       parts: [{ type: 'text', text: query }],
+  //     });
 
-      setHasAppendedQuery(true);
-      window.history.replaceState({}, '', `/chat/${id}`);
-    }
-  }, [query, sendMessage, hasAppendedQuery, id]);
+  //     setHasAppendedQuery(true);
+  //     window.history.replaceState({}, '', `/chat/${id}`);
+  //   }
+  // }, [query, sendMessage, hasAppendedQuery, id]);
 
   // const { data: votes } = useSWR<Array<Vote>>(
   //   messages.length >= 2 ? `/api/vote?chatId=${id}` : null,
@@ -161,7 +170,7 @@ export function Chat({
           // isReadonly={isReadonly}
           // session={session}
         />
-{/* 
+
         <Messages
           chatId={id}
           status={status}
@@ -172,10 +181,10 @@ export function Chat({
           // isReadonly={isReadonly}
           // isArtifactVisible={isArtifactVisible}
           selectedModelId={initialChatModel}
-        /> */}
+        />
 
         <div className="sticky bottom-0 z-1 mx-auto flex w-full max-w-4xl gap-2 border-t-0 bg-background px-2 pb-3 md:px-4 md:pb-4">
-          {!isReadonly && (
+            
             <MultimodalInput
               chatId={id}
               input={input}
@@ -189,9 +198,9 @@ export function Chat({
               sendMessage={sendMessage}
               // selectedVisibilityType={visibilityType}
               selectedModelId={initialChatModel}
-              usage={usage}
+              connections={connections}
             />
-          )}
+            
         </div>
       </div>
 

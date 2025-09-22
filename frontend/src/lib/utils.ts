@@ -38,11 +38,13 @@ export async function fetchWithErrorHandlers(
 ) {
   try {
     const response = await fetch(input, init);
+    console.log("response",response)
 
     if (!response.ok) {
       const { code, cause } = await response.json();
       throw new ChatSDKError(code as ErrorCode, cause);
     }
+        console.log("response",response)
 
     return response;
   } catch (error: unknown) {
@@ -125,7 +127,7 @@ export const getAlldata = cache(async (token:string) => {
   console.log("fetching cached data hit or miss")
   // This function will only be executed once per render pass
   const res = await fetch(
-    'http://localhost:80/workspace/data',
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/workspace/data`,
 
     {
       headers: {

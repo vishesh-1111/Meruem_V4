@@ -16,10 +16,10 @@ const Footer = () => {
       <div className="flex flex-col gap-8 text-gray-300/85 max-w-[300px]">
         <Image src={Logo} alt="Logo" className="cursor-pointer" />
         <div>
-          This website is developed by{" "}
+            Meruem is built by {" "}
           <div className="font-semibold text-white hover:underline text-lg">
-            <a href="https://github.com/tanishkadeep">
-              Tanishka Deep <MdOutlineArrowOutward className="inline" />
+            <a href="https://www.linkedin.com/in/vishesh-kumar-gautam-206216290/" target="_blank">
+              Vishesh Kumar Gautam <MdOutlineArrowOutward className="inline" />
             </a>
           </div>
         </div>

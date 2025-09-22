@@ -19,10 +19,25 @@ export function middleware(request) {
     }
 }
 
-//   if (pathname === '/landing'&&meruemsAccessToken) {
+  if (pathname === '/landing'&&meruemsAccessToken) {
 
-//      return NextResponse.redirect(new URL('/home', request.url))
-// }
+     return NextResponse.redirect(new URL('/home', request.url))
+}
+
+if (pathname === '/auth'&&meruemsAccessToken) {
+    console.log(pathname)
+    
+
+     return NextResponse.redirect(new URL('/home', request.url))
+}
+
+if (pathname === '/home'&&!meruemsAccessToken) {
+    console.log(pathname)
+    
+
+     return NextResponse.redirect(new URL('/auth', request.url))
+}
+  
   
   // For all other routes, continue normally
   return NextResponse.next()
@@ -38,6 +53,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * - auth (auth pages - to prevent redirect loops)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|auth).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 }

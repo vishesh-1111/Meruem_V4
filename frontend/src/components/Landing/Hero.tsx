@@ -7,7 +7,7 @@ import Cylinder from "../../../public/assests/cylinder.png";
 import HalfTorus from "../../../public/assests/half-torus.png";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
-
+import Link from "next/link";
 const Hero = () => {
   const heroRef = useRef(null);
 
@@ -37,7 +37,7 @@ const Hero = () => {
           </div>
 
           <div className="flex items-center gap-3 mt-6 text-lg">
-            <Button text="Get for free" />
+            <Link href={"/auth"} prefetch={true}><Button text="Get for free"/></Link>
             <div className="cursor-pointer hover:underline">
               Learn more
               <FaArrowRight className="h-3 w-3 inline ml-2" />

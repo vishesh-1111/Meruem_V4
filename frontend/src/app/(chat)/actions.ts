@@ -33,14 +33,14 @@ export async function generateTitleFromUserMessage({
   return title;
 }
 
-// export async function deleteTrailingMessages({ id }: { id: string }) {
-//   const [message] = await getMessageById({ id });
+export async function deleteTrailingMessages({ id }: { id: string }) {
+  // const [message] = await getMessageById({ id });
 
-//   await deleteMessagesByChatIdAfterTimestamp({
-//     chatId: message.chatId,
-//     timestamp: message.createdAt,
-//   });
-// }
+  // await deleteMessagesByChatIdAfterTimestamp({
+  //   chatId: message.chatId,
+  //   timestamp: message.createdAt,
+  // });
+}
 
 // export async function updateChatVisibility({
 //   chatId,

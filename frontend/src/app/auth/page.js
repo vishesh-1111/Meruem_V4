@@ -20,7 +20,7 @@ export default function CardDemo() {
     try {
       setIsLoading(true);
       
-      const response = await fetch("http://localhost:80/auth/google", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/google`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

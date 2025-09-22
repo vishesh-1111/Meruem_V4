@@ -35,10 +35,10 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowDown } from 'lucide-react';
 import { useScrollToBottom } from '@/hooks/use-scroll-to-bottom';
 import type { VisibilityType } from './visibility-selector';
-import type { Attachment, ChatMessage } from '@/lib/types';
-import { chatModels } from '@/lib/ai/models';
+import type { Attachment, ChatMessage, Connection } from '@/lib/types';
 import { saveChatModelAsCookie } from '@/app/(chat)/actions';
 import { startTransition } from 'react';
+import { text } from 'stream/consumers';
 
 function PureMultimodalInput({
   chatId,
@@ -46,28 +46,23 @@ function PureMultimodalInput({
   setInput,
   status,
   stop,
-  attachments,
-  setAttachments,
-  messages,
+  // messages,
   setMessages,
   sendMessage,
-  className,
-  selectedVisibilityType,
   selectedModelId,
+  connections,
 }: {
   chatId: string;
   input: string;
   setInput: Dispatch<SetStateAction<string>>;
   status: UseChatHelpers<ChatMessage>['status'];
   stop: () => void;
-  attachments: Array<Attachment>;
-  setAttachments: Dispatch<SetStateAction<Array<Attachment>>>;
   messages: Array<UIMessage>;
   setMessages: UseChatHelpers<ChatMessage>['setMessages'];
   sendMessage: UseChatHelpers<ChatMessage>['sendMessage'];
   className?: string;
-  selectedVisibilityType: VisibilityType;
   selectedModelId: string;
+  connections:Connection[];
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
@@ -115,21 +110,16 @@ function PureMultimodalInput({
     setInput(event.target.value);
   };
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
+  // const fileInputRef = useRef<HTMLInputElement>(null);
+  // const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
 
   const submitForm = useCallback(() => {
     window.history.replaceState({}, '', `/chat/${chatId}`);
+    console.log("sending message",input)
 
     sendMessage({
       role: 'user',
       parts: [
-        ...attachments.map((attachment) => ({
-          type: 'file' as const,
-          url: attachment.url,
-          name: attachment.name,
-          mediaType: attachment.contentType,
-        })),
         {
           type: 'text',
           text: input,
@@ -137,7 +127,6 @@ function PureMultimodalInput({
       ],
     });
 
-    setAttachments([]);
     setLocalStorageInput('');
     resetHeight();
     setInput('');
@@ -148,66 +137,64 @@ function PureMultimodalInput({
   }, [
     input,
     setInput,
-    attachments,
     sendMessage,
-    setAttachments,
     setLocalStorageInput,
     width,
     chatId,
   ]);
 
-  const uploadFile = async (file: File) => {
-    const formData = new FormData();
-    formData.append('file', file);
+  // const uploadFile = async (file: File) => {
+  //   const formData = new FormData();
+  //   formData.append('file', file);
 
-    try {
-      const response = await fetch('/api/files/upload', {
-        method: 'POST',
-        body: formData,
-      });
+  //   try {
+  //     const response = await fetch('/api/files/upload', {
+  //       method: 'POST',
+  //       body: formData,
+  //     });
 
-      if (response.ok) {
-        const data = await response.json();
-        const { url, pathname, contentType } = data;
+  //     if (response.ok) {
+  //       const data = await response.json();
+  //       const { url, pathname, contentType } = data;
 
-        return {
-          url,
-          name: pathname,
-          contentType: contentType,
-        };
-      }
-      const { error } = await response.json();
-      toast.error(error);
-    } catch (error) {
-      toast.error('Failed to upload file, please try again!');
-    }
-  };
+  //       return {
+  //         url,
+  //         name: pathname,
+  //         contentType: contentType,
+  //       };
+  //     }
+  //     const { error } = await response.json();
+  //     toast.error(error);
+  //   } catch (error) {
+  //     toast.error('Failed to upload file, please try again!');
+  //   }
+  // };
 
-  const handleFileChange = useCallback(
-    async (event: ChangeEvent<HTMLInputElement>) => {
-      const files = Array.from(event.target.files || []);
+  // const handleFileChange = useCallback(
+  //   async (event: ChangeEvent<HTMLInputElement>) => {
+  //     const files = Array.from(event.target.files || []);
 
-      setUploadQueue(files.map((file) => file.name));
+  //     setUploadQueue(files.map((file) => file.name));
 
-      try {
-        const uploadPromises = files.map((file) => uploadFile(file));
-        const uploadedAttachments = await Promise.all(uploadPromises);
-        const successfullyUploadedAttachments = uploadedAttachments.filter(
-          (attachment) => attachment !== undefined,
-        );
+  //     try {
+  //       const uploadPromises = files.map((file) => uploadFile(file));
+  //       const uploadedAttachments = await Promise.all(uploadPromises);
+  //       const successfullyUploadedAttachments = uploadedAttachments.filter(
+  //         (attachment) => attachment !== undefined,
+  //       );
 
-        setAttachments((currentAttachments) => [
-          ...currentAttachments,
-          ...successfullyUploadedAttachments,
-        ]);
-      } catch (error) {
-        console.error('Error uploading files!', error);
-      } finally {
-        setUploadQueue([]);
-      }
-    },
-    [setAttachments],
-  );
+  //       setAttachments((currentAttachments) => [
+  //         ...currentAttachments,
+  //         ...successfullyUploadedAttachments,
+  //       ]);
+  //     } catch (error) {
+  //       console.error('Error uploading files!', error);
+  //     } finally {
+  //       setUploadQueue([]);
+  //     }
+  //   },
+  //   [setAttachments],
+  // );
 
   const { isAtBottom, scrollToBottom } = useScrollToBottom();
 
@@ -323,15 +310,15 @@ function PureMultimodalInput({
         />
         <PromptInputToolbar className="px-3 py-2 !border-t-0 !border-top-0 shadow-none dark:!border-transparent dark:border-0">
           <PromptInputTools className="gap-2">
-            <AttachmentsButton fileInputRef={fileInputRef} status={status} selectedModelId={selectedModelId} />
-            <ModelSelectorCompact selectedModelId={selectedModelId} />
+            {/* <AttachmentsButton fileInputRef={fileInputRef} status={status} selectedModelId={selectedModelId} /> */}
+            <ModelSelectorCompact selectedModelId={selectedModelId} connections={connections} />
           </PromptInputTools>
           {status === 'submitted' ? (
             <StopButton stop={stop} setMessages={setMessages} />
           ) : (
             <PromptInputSubmit
               status={status}
-              disabled={!input.trim() || uploadQueue.length > 0}
+              disabled={!input.trim()}
               className="p-2 rounded-full transition-colors duration-200 text-primary-foreground bg-primary hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground"
             >
               <ArrowUpIcon size={16} />
@@ -356,44 +343,46 @@ export const MultimodalInput = memo(
   },
 );
 
-function PureAttachmentsButton({
-  fileInputRef,
-  status,
-  selectedModelId,
-}: {
-  fileInputRef: React.MutableRefObject<HTMLInputElement | null>;
-  status: UseChatHelpers<ChatMessage>['status'];
-  selectedModelId: string;
-}) {
-  const isReasoningModel = selectedModelId === 'chat-model-reasoning';
+// function PureAttachmentsButton({
+//   fileInputRef,
+//   status,
+//   selectedModelId,
+// }: {
+//   fileInputRef: React.MutableRefObject<HTMLInputElement | null>;
+//   status: UseChatHelpers<ChatMessage>['status'];
+//   selectedModelId: string;
+// }) {
+//   const isReasoningModel = selectedModelId === 'chat-model-reasoning';
   
-  return (
-    <Button
-      data-testid="attachments-button"
-      className="rounded-md p-1.5 h-fit hover:bg-muted transition-colors duration-200"
-      onClick={(event) => {
-        event.preventDefault();
-        fileInputRef.current?.click();
-      }}
-      disabled={status !== 'ready' || isReasoningModel}
-      variant="ghost"
-      size="sm"
-    >
-      <PaperclipIcon size={14} />
-    </Button>
-  );
-}
+//   return (
+//     <Button
+//       data-testid="attachments-button"
+//       className="rounded-md p-1.5 h-fit hover:bg-muted transition-colors duration-200"
+//       onClick={(event) => {
+//         event.preventDefault();
+//         fileInputRef.current?.click();
+//       }}
+//       disabled={status !== 'ready' || isReasoningModel}
+//       variant="ghost"
+//       size="sm"
+//     >
+//       <PaperclipIcon size={14} />
+//     </Button>
+//   );
+// }
 
-const AttachmentsButton = memo(PureAttachmentsButton);
+// const AttachmentsButton = memo(PureAttachmentsButton);
 
 function PureModelSelectorCompact({
   selectedModelId,
+  connections,
 }: {
   selectedModelId: string;
+  connections: Connection[];
 }) {
   const [optimisticModelId, setOptimisticModelId] = useState(selectedModelId);
 
-  const selectedModel = chatModels.find(
+  const selectedModel = connections.find(
     (model) => model.id === optimisticModelId,
   );
 
@@ -401,7 +390,7 @@ function PureModelSelectorCompact({
     <PromptInputModelSelect
       value={selectedModel?.name}
       onValueChange={(modelName) => {
-        const model = chatModels.find((m) => m.name === modelName);
+        const model = connections.find((m) => m.name === modelName);
         if (model) {
           setOptimisticModelId(model.id);
           startTransition(() => {
@@ -417,12 +406,12 @@ function PureModelSelectorCompact({
         {selectedModel?.name || 'Select model'}
       </PromptInputModelSelectTrigger>
       <PromptInputModelSelectContent>
-        {chatModels.map((model) => (
+        {connections.map((model) => (
           <SelectItem key={model.id} value={model.name}>
             <div className="flex flex-col gap-1 items-start py-1">
               <div className="font-medium">{model.name}</div>
               <div className="text-xs text-muted-foreground">
-                {model.description}
+                {model.driver}
               </div>
             </div>
           </SelectItem>

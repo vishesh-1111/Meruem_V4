@@ -19,7 +19,7 @@ export default function OAuthCallback() {
     const code = decodeURIComponent(codeParam);
 
     // Call the FastAPI backend
-    fetch("http://localhost:80/auth/google/callback", {
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/google/callback`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ code }),

@@ -78,3 +78,11 @@ export type Chat = {
   name:string; // "vishesh chat"
   createdAt: string; // "2024-06-20T10:20:30Z"
 };
+
+
+
+export type Connection = {
+  id: string; // "68c2b0e15b976448616305a0"
+  name:string; // "vishesh chat"
+  driver: string; // "mysql"
+};

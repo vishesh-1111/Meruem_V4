@@ -2,9 +2,9 @@ import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 // import { auth } from '@/app/(auth)/auth';
 
-// import { Chat } from '@/components/chat';
+import { Chat } from '@/components/chat';
 // import { getChatById, getMessagesByChatId } from '@/lib/db/queries';
-// import { DataStreamHandler } from '@/components/data-stream-handler';
+import { DataStreamHandler } from '@/components/data-stream-handler';
 // import { DEFAULT_CHAT_MODEL } from '@/lib/ai/models';
 // import { convertToUIMessages } from '@/lib/utils';
 // import { ChatHeader } from "@/components/chat-header";
@@ -16,7 +16,7 @@ export default async function Page(props: { params: Promise<{ workspaceId: strin
   const token = cookieStore.get('meruem_access_token')?.value;
 
 
-    const connections = await fetch(`http://localhost:80/connections/workspace/${workspaceId}`,
+    const connections = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/connections/workspace/${workspaceId}`,
       {
       headers: {
         'Content-Type': 'application/json',
@@ -76,7 +76,19 @@ export default async function Page(props: { params: Promise<{ workspaceId: strin
 
   return (
     <>
-        {JSON.stringify(connections)}
+      <Chat
+        id={"132222222222222222222222222222223232"}
+        initialMessages={[]}
+        initialChatModel={connections[0]?.id}
+        connections={connections}
+        workspaceId={workspaceId}
+        // initialVisibilityType={chat.visibility}
+        // isReadonly={session?.user?.id !== chat.userId}
+        // session={session}
+        autoResume={true}
+        // initialLastContext={chat.lastContext ?? undefined}
+      />
+        {/* <DataStreamHandler /> */}
     </>
   );
 }

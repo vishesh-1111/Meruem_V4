@@ -7,7 +7,7 @@ import Helix from "../../../public/assests/helix2 1.png";
 import Image from "next/image";
 import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
-
+import Link from "next/link";
 const CTA = () => {
   const sectionRef = useRef(null);
 
@@ -50,7 +50,7 @@ const CTA = () => {
         </div>
 
         <div className="flex items-center gap-4 mt-4 text-lg">
-          <Button text="Get for free" />
+          <Link href={"/auth"} prefetch={true}><Button text="Get for free"/></Link>
           <div className="font-semibold cursor-pointer  hover:underline">
             Learn more
             <FaArrowRight className="h-3 w-3 inline ml-2" />
