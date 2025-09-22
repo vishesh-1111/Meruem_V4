@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     GOOGLE_OAUTH_CLIENT_ID:str
     GOOGLE_OAUTH_CLIENT_SECRET:str
     GOOGLE_OAUTH_REDIRECT_URI:str
+    FRONTEND_URL:str
 
     # DB_HOS = SettingsConfigDict(env_file=".env")
     model_config= SettingsConfigDict(env_file=".env", env_file_encoding="utf-8",extra="ignore")

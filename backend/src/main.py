@@ -9,11 +9,14 @@ from .user.schema import User
 from .workspace.schema import Workspace
 from .connections.schema import Connection
 from .chats.schema import Chat
+from .messages.schema import Message
 from .auth.api import router as auth_router
 from .workspace.api import router as workspace_router
 from .connections.api import router as connections_router
 from .chats.api import router as chats_router
-
+from .messages.api import router as messages_router
+from .stream.api import router as stream_router
+from .config import get_frontend_config
 
 
 
@@ -25,7 +28,8 @@ async def lifespan(app: FastAPI):
             User,
             Workspace,
             Connection,
-            Chat
+            Chat,
+            Message
         ],
     )
     yield
@@ -34,14 +38,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+frontend_config= get_frontend_config()
 # Configure CORS
 origins = [
-    "http://localhost:3000",  # Your frontend development server
-    "http://127.0.0.1:3000",  # Alternative localhost
-    "https://localhost:3000", # If you use HTTPS locally
-    "http://localhost:3001",  # Your frontend development server
-    "http://127.0.0.1:3001",  # Alternative localhost
-    "https://localhost:3001", # If you use HTTPS locally
+     frontend_config["frontend_url"]
 ]
 
 app.add_middleware(
@@ -57,6 +57,8 @@ app.include_router(auth_router,tags=["auth"])
 app.include_router(workspace_router,tags=["workspace"])
 app.include_router(connections_router,tags=["connections"])
 app.include_router(chats_router,tags=["chats"])
+app.include_router(messages_router,tags=["messages"])
+app.include_router(stream_router,tags=["stream"])
 
 
 # from src.workspace.schema import Workspace

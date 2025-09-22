@@ -12,7 +12,7 @@ from .config import get_google_oauth_config
 
 SECRET_KEY = get_settings().JWT_SECRET
 ALGORITHM = "HS256"
-print("............................",SECRET_KEY)
+# print("............................",SECRET_KEY)
 def get_current_user(request: Request):
 
     print(request.cookies)

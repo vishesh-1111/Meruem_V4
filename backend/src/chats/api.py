@@ -109,7 +109,7 @@ async def get_workspace_chats(
         
         # Get all chats in the workspace, sorted by creation date (newest first)
         chats = await Chat.find(
-            # Chat.workspace_id.ref.id == PydanticObjectId(workspace_id)
+            Chat.workspace_id.ref.id == PydanticObjectId(workspace_id)
         ).sort(-Chat.created_at).to_list()
         
         # Convert to response format

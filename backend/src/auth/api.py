@@ -8,6 +8,7 @@ from ..user.schema import User, UserCreate
 from config import get_settings
 from .config import get_google_oauth_config
 from .services import create_jwt_token, fetch_google_user_profile, exchange_code_for_token, generate_google_oauth_url, get_access_token_from_code
+from ..workspace.crud import create_workspace_for_user
 router = APIRouter(prefix="/auth")
 
 
@@ -55,7 +56,7 @@ async def google_oauth_callback(request: GoogleCallbackRequest):
         # Check if user already exists by email
         existing_user = await User.find_one(User.email == email)
 
-        print('existing_user',existing_user)
+        # print('existing_user',existing_user)
         
         if existing_user:
             user = existing_user
@@ -67,7 +68,6 @@ async def google_oauth_callback(request: GoogleCallbackRequest):
                 email=email,
                 profile_url=picture if picture else None
             )
-            
             # Save user to database
             user = User(
                 first_name=user_data.first_name,
@@ -75,8 +75,11 @@ async def google_oauth_callback(request: GoogleCallbackRequest):
                 email=user_data.email,
                 profile_url=user_data.profile_url
             )
-            
             await user.insert()
+            # Create default workspace for the new user
+            workspace_name = f"{given_name}'s workspace"
+            print("calling workspace creation")
+            await create_workspace_for_user(str(user.id), workspace_name)
         
         # Generate JWT token with 2-hour expiration using service
         token_payload = {
@@ -106,7 +109,7 @@ async def google_oauth_callback(request: GoogleCallbackRequest):
             }
         }
         response = JSONResponse(content=response_content)
-        print(response)
+        # print(response)
         # response = RedirectResponse(url="http://localhost:3000", status_code=302)
         response.set_cookie(
             key="meruem_access_token",
