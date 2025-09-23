@@ -118,7 +118,8 @@ async def google_oauth_callback(request: GoogleCallbackRequest):
             httponly=True,
             secure=True,  # True in production with HTTPS
             samesite="none",
-            path="/"
+            path="/",
+            domain="https://localhost:3000"
         )
         return response
             
