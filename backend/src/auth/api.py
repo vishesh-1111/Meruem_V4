@@ -115,7 +115,7 @@ async def google_oauth_callback(request: GoogleCallbackRequest):
             key="meruem_access_token",
             value=meruem_access_token,
             max_age=7200,  # 2 hours
-            httponly=False,
+            httponly=True,
             secure=True,  # True in production with HTTPS
             samesite="none"
         )
