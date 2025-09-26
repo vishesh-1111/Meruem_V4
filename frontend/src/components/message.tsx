@@ -1,8 +1,8 @@
 'use client';
 import { motion } from 'framer-motion';
 import { memo, useState } from 'react';
-import type { Vote } from '@/lib/db/schema';
-import { DocumentToolResult } from './document';
+// import type { Vote } from '@/lib/db/schema';
+// import { DocumentToolResult } from './document';
 import { SparklesIcon } from './icons';
 import { Response } from './elements/response';
 import { MessageContent } from './elements/message';
@@ -13,13 +13,13 @@ import {
   ToolInput,
   ToolOutput,
 } from './elements/tool';
-import { MessageActions } from './message-actions';
-import { PreviewAttachment } from './preview-attachment';
-import { Weather } from './weather';
+// import { MessageActions } from './message-actions';
+// import { PreviewAttachment } from './preview-attachment';
+// import { Weather } from './weather';
 import equal from 'fast-deep-equal';
 import { cn, sanitizeText } from '@/lib/utils';
 import { MessageEditor } from './message-editor';
-import { DocumentPreview } from './document-preview';
+// import { DocumentPreview } from './document-preview';
 import { MessageReasoning } from './message-reasoning';
 import type { UseChatHelpers } from '@ai-sdk/react';
 import type { ChatMessage } from '@/lib/types';
@@ -95,7 +95,7 @@ const PurePreviewMessage = ({
               data-testid={`message-attachments`}
               className="flex flex-row gap-2 justify-end"
             >
-              {attachmentsFromMessage.map((attachment) => (
+              {/* {attachmentsFromMessage.map((attachment) => (
                 <PreviewAttachment
                   key={attachment.url}
                   attachment={{
@@ -104,7 +104,7 @@ const PurePreviewMessage = ({
                     url: attachment.url,
                   }}
                 />
-              ))}
+              ))} */}
             </div>
           )}
 

@@ -42,7 +42,8 @@ frontend_config= get_frontend_config()
 # Configure CORS
 origins = [
      frontend_config["frontend_url"],
-     "https://localhost:3000"
+     "https://localhost:3000",
+     "https://8mo7mu-ip-152-57-5-170.tunnelmole.net"
 ]
 
 app.add_middleware(

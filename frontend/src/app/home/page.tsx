@@ -3,12 +3,12 @@ import { cookies } from 'next/headers';
 // import { notFound, redirect } from 'next/navigation';
 // // import { auth } from '@/app/(auth)/auth';
 import { getAlldata } from '@/lib/utils';
-import { Chat } from '@/components/chat';
+// import { Chat } from '@/components/chat';
 // import { getChatById, getMessagesByChatId } from '@/lib/db/queries';
 // import { DataStreamHandler } from '@/components/data-stream-handler';
-import { DEFAULT_CHAT_MODEL } from '@/lib/ai/models';
+// import { DEFAULT_CHAT_MODEL } from '@/lib/ai/models';
 // import { convertToUIMessages } from '@/lib/utils';
-import { ChatHeader } from "@/components/chat-header";
+// import { ChatHeader } from "@/components/chat-header";
 import { json } from 'zod';
 import { redirect } from 'next/navigation';
 // export default async function Page(props: { params: Promise<{ id: string }> }) {

@@ -3,7 +3,6 @@
 import { ChevronUp, FolderOpen, Plus,ChevronDown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,13 +35,13 @@ export function WorkspaceDrawer() {
   const handleSelectWorkspace = (workspace: Workspace) => {
     setActiveWorkspace(workspace);
     // Navigate to the workspace or update the UI
-    router.push(`/workspace/${workspace.id}`);
+    router.push(`home/workspace/${workspace.id}`);
   };
 
   const handleCreateWorkspace = () => {
     // Placeholder for workspace creation flow
     // This could open a modal or navigate to a creation page
-    router.push('/workspace/new');
+    router.push('/home/workspace/new');
   };
 
   return (

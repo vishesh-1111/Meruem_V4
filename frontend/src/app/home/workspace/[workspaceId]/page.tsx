@@ -4,7 +4,7 @@ import { notFound, redirect } from 'next/navigation';
 
 import { Chat } from '@/components/chat';
 // import { getChatById, getMessagesByChatId } from '@/lib/db/queries';
-import { DataStreamHandler } from '@/components/data-stream-handler';
+// import { DataStreamHandler } from '@/components/data-stream-handler';
 // import { DEFAULT_CHAT_MODEL } from '@/lib/ai/models';
 // import { convertToUIMessages } from '@/lib/utils';
 // import { ChatHeader } from "@/components/chat-header";

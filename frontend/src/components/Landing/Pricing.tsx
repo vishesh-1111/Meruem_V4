@@ -56,7 +56,7 @@ const Pricing = () => {
             </div>
           </div>
           <div className="py-8">
-            <span className="font-extrabold text-5xl">$9</span>
+            <span className="font-extrabold text-5xl">$0</span>
             <span className="font-semibold text-gray-600">/month</span>
           </div>
           <button className="text-black font-medium mb-8 bg-white py-1.5 w-full rounded-lg cursor-pointer">
@@ -90,7 +90,7 @@ const Pricing = () => {
         <div className="shadow-xl border-gray-100 border-2 rounded-2xl p-8">
           <div className="font-bold text-gray-500">Business</div>
           <div className="py-8">
-            <span className="font-extrabold text-5xl">$19</span>
+            <span className="font-extrabold text-5xl">$0</span>
             <span className="font-semibold text-gray-600">/month</span>
           </div>
           <button className="text-white mb-8 bg-black py-1.5 w-full rounded-lg cursor-pointer">

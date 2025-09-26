@@ -18,6 +18,10 @@ const eslintConfig = [
   {
     rules: {
       "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+        "import/order": "off", // Disables the import/order rule
+    "import/no-unresolved": "off",
+  
     },
   },
 

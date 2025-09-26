@@ -1,7 +1,7 @@
 import { PreviewMessage, ThinkingMessage } from './message';
 import { Greeting } from './greeting';
 import { memo, useEffect } from 'react';
-import type { Vote } from '@/lib/db/schema';
+// import type { Vote } from '@/lib/db/schema';
 import equal from 'fast-deep-equal';
 import type { UseChatHelpers } from '@ai-sdk/react';
 import { useMessages } from '@/hooks/use-messages';
@@ -58,7 +58,7 @@ function PureMessages({
         }
       });
     }
-  }, [status]);
+  }, [status,messagesContainerRef]);
 
   return (
     <div

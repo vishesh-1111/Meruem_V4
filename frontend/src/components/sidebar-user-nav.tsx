@@ -78,7 +78,7 @@ export function SidebarUserNav({ user }: { user: User }) {
                 type="button"
                 className="w-full cursor-pointer"
                 onClick={() => {
-                  router.push('http://localhost:80/auth/logout');
+                  router.push(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/logout`);
                   }
                 }
               >

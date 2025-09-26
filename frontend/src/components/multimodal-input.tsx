@@ -15,9 +15,9 @@ import { toast } from 'sonner';
 import { useLocalStorage, useWindowSize } from 'usehooks-ts';
 
 import { ArrowUpIcon, PaperclipIcon, StopIcon } from './icons';
-import { PreviewAttachment } from './preview-attachment';
+// import { PreviewAttachment } from './preview-attachment';
 import { Button } from './ui/button';
-import { SuggestedActions } from './suggested-actions';
+// import { SuggestedActions } from './suggested-actions';
 import {
   PromptInput,
   PromptInputTextarea,
@@ -34,7 +34,7 @@ import type { UseChatHelpers } from '@ai-sdk/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowDown } from 'lucide-react';
 import { useScrollToBottom } from '@/hooks/use-scroll-to-bottom';
-import type { VisibilityType } from './visibility-selector';
+// import type { VisibilityType } from './visibility-selector';
 import type { Attachment, ChatMessage, Connection } from '@/lib/types';
 import { saveChatModelAsCookie } from '@/app/(chat)/actions';
 import { startTransition } from 'react';
@@ -311,7 +311,7 @@ function PureMultimodalInput({
         <PromptInputToolbar className="px-3 py-2 !border-t-0 !border-top-0 shadow-none dark:!border-transparent dark:border-0">
           <PromptInputTools className="gap-2">
             {/* <AttachmentsButton fileInputRef={fileInputRef} status={status} selectedModelId={selectedModelId} /> */}
-            <ModelSelectorCompact selectedModelId={selectedModelId} connections={connections} />
+            {/* <ModelSelectorCompact selectedModelId={selectedModelId} connections={connections} /> */}
           </PromptInputTools>
           {status === 'submitted' ? (
             <StopButton stop={stop} setMessages={setMessages} />

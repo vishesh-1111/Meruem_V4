@@ -14,9 +14,8 @@ const ProductCard = () => {
         </div>
 
         <div className="text-center text-lg mb-8 md:text-xl">
-          Enjoy customizable lists, team work tools, and smart tracking all in
-          one place. Set tasks, get reminders, and see your progress simply and
-          quickly.
+          Ask questions in plain language, get instant answers,and make decisions with confidence—no waiting, 
+          no bottlenecks, just clear insights when you need them.
         </div>
       </div>
 
@@ -27,8 +26,8 @@ const ProductCard = () => {
             Integration ecosystem
           </div>
           <div className="text-center">
-            Enhance your productivity by connecting with your favorite tools,
-            keeping all your essentials in one place.
+            Enhance your productivity by inviting collaborators to your workspace,
+            keeping all your essential Analytics in one place.
           </div>
         </div>
 

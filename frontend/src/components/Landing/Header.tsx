@@ -32,12 +32,16 @@ const Header = () => {
         <nav className="hidden md:block">
           <ul className="flex gap-6 items-center">
             <li>
-              <a href="#">About</a>
+                <a href="https://vishesh2004.vercel.app" target="_blank">About-Me</a>
             </li>
             <li>
-              <a href="#">Features</a>
+               <Link href={"/docs"} prefetch={true}>Docs</Link>
             </li>
-            <li>
+             <li>
+               <Link href={"/about"} prefetch={true}>Why Us</Link>
+            </li>
+            
+            {/* <li>
               <a href="#">Customers</a>
             </li>
             <li>
@@ -45,7 +49,7 @@ const Header = () => {
             </li>
             <li>
               <a href="#">Help</a>
-            </li>
+            </li> */}
             <Link href={"/auth"} prefetch={true}><Button text="Get for free"/></Link>
           </ul>
         </nav>

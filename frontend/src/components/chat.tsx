@@ -5,8 +5,8 @@ import { useChat } from '@ai-sdk/react';
 import { useEffect, useState } from 'react';
 import useSWR, { useSWRConfig } from 'swr';
 import { ChatHeader } from '@/components/chat-header';
-import type { Vote } from '@/lib/db/schema';
-import { fetcher, fetchWithErrorHandlers, generateUUID } from '@/lib/utils';
+// import type { Vote } from '@/lib/db/schema';
+// import { fetcher, fetchWithErrorHandlers, generateUUID } from '@/lib/utils';
 // import { Artifact } from './artifact';
 import { MultimodalInput } from './multimodal-input';
 import { Messages } from './messages';
@@ -76,10 +76,10 @@ export function Chat({
     id,
     messages: initialMessages,
     experimental_throttle: 100,
-    generateId: generateUUID,
+    // generateId: generateUUID,
     transport: new DefaultChatTransport({
       api: `${process.env.NEXT_PUBLIC_API_BASE_URL}/stream/`,
-      fetch: fetchWithErrorHandlers,
+      // fetch: fetchWithErrorHandlers,
       prepareSendMessagesRequest({ messages, id, body }) {
         return {
           // body: {
