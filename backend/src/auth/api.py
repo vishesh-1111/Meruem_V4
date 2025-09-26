@@ -9,7 +9,7 @@ from config import get_settings
 from .config import get_google_oauth_config
 from .services import create_jwt_token, fetch_google_user_profile, exchange_code_for_token, generate_google_oauth_url, get_access_token_from_code
 from ..workspace.crud import create_workspace_for_user
-from .config import get_frontend_config
+from ..config import get_frontend_config
 frontend_config= get_frontend_config()
 router = APIRouter(prefix="/auth")
 
