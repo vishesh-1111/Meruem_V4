@@ -120,8 +120,7 @@ async def google_oauth_callback(request: GoogleCallbackRequest):
             httponly=True,
             secure=True,  # True in production with HTTPS
             samesite="none",
-            path="/",
-            domain=frontend_config["frontend_url"]
+
         )
         return response
             
