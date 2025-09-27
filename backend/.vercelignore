@@ -1,5 +1,4 @@
-/*
-!requirements.txt
-!src
-!vercel.json
-!config.py
+venv
+.venv
+.env
+env
