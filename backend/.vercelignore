@@ -1,0 +1,12 @@
+# Exclude specific files
+.env
+pytest.ini
+README.md
+package.json
+
+# Exclude specific directories
+.venv/
+docs/
+tests/
+automations/
+prisma/migrations/
