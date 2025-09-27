@@ -119,7 +119,8 @@ async def google_oauth_callback(request: GoogleCallbackRequest):
             max_age=7200,  # 2 hours
             httponly=True,
             secure=True,  # True in production with HTTPS
-            samesite="none",
+            # samesite="none",
+            # domain="meruem-v4.vercel.app"
 
         )
         return response
