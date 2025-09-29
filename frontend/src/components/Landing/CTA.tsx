@@ -45,8 +45,7 @@ const CTA = () => {
         </div>
 
         <div className="text-center text-lg mb-8 md:text-xl">
-          Celebrate the joy of accomplishment with an app designed to track your
-          progress and motivate your efforts.
+          Celebrate the joy of accomplishment with an app designed to be your analyst buddy
         </div>
 
         <div className="flex items-center gap-4 mt-4 text-lg">

@@ -8,13 +8,11 @@ const Pricing = () => {
           Boost your productivity
         </div>
         <div className="text-3xl md:text-4xl lg:text-5xl py-6 font-bold tracking-tighter text-center bg-gradient-to-b from-black to-[#002499] text-transparent bg-clip-text">
-          A more effective way to track progress
+          A more effective way to track Analysis
         </div>
 
         <div className="text-center text-lg mb-8 md:text-xl">
-          Effortlessly turn your ideas into a fully functional, responsive,
-          no-code SaaS website in just minutes with the set of free components
-          for Framer.
+          Effortlessly turn your queries into meaningful insights and visualizations
         </div>
       </div>
 
