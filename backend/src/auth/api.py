@@ -111,18 +111,18 @@ async def google_oauth_callback(request: GoogleCallbackRequest):
             }
         }
         response = JSONResponse(content=response_content)
-        # print(response)
-        # response = RedirectResponse(url="http://localhost:3000", status_code=302)
-        response.set_cookie(
-            key="meruem_access_token",
-            value=meruem_access_token,
-            max_age=7200,  # 2 hours
-            httponly=True,
-            secure=True,  # True in production with HTTPS
-            # samesite="none",
-            # domain="meruem-v4.vercel.app"
+        # # print(response)
+        # # response = RedirectResponse(url="http://localhost:3000", status_code=302)
+        # response.set_cookie(
+        #     key="meruem_access_token",
+        #     value=meruem_access_token,
+        #     max_age=7200,  # 2 hours
+        #     httponly=True,
+        #     secure=True,  # True in production with HTTPS
+        #     # samesite="none",
+        #     # domain="meruem-v4.vercel.app"
 
-        )
+        # )
         return response
             
     except HTTPException:
